@@ -57,3 +57,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to save data' }, { status: 500 });
   }
 }
+export async function PATCH(request: Request) {
+  try {
+    const { id, completed } = await request.json();
+    
+    if (typeof id !== 'number' || typeof completed !== 'boolean') {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+
+    // Read the existing data
+    const fileData = await fs.readFile(DATA_PATH, 'utf8');
+    const data = JSON.parse(fileData);
+    
+    // Find and update the task
+    const taskIndex = data.tasks.findIndex((t: Task) => t.id === id);
+    if (taskIndex === -1) {
+      return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+    }
+    
+    data.tasks[taskIndex].completed = completed;
+    
+    // Write back to the file
+    await fs.writeFile(DATA_PATH, JSON.stringify(data, null, 2));
+    
+    return NextResponse.json(data.tasks[taskIndex]);
+  } catch (error) {
+    console.error('Error updating tasks.json:', error);
+    return NextResponse.json({ error: 'Failed to update data' }, { status: 500 });
+  }
+}

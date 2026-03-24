@@ -34,6 +34,29 @@ export default function TasksPage() {
     }
   };
 
+  const toggleComplete = async (id: number, currentStatus: boolean) => {
+    try {
+      const response = await fetch('/api/tasks', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, completed: !currentStatus }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update task');
+      
+      // Update local state instead of refetching for better UX
+      setTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === id ? { ...task, completed: !currentStatus } : task
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling task completion:', error);
+      // Optionally show a notification or refetch if critical
+      fetchTasks();
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-grow pt-12 pb-12">
@@ -65,54 +88,81 @@ export default function TasksPage() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {tasks.map((task) => (
-                <div 
-                  key={task.id} 
-                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`mt-1 h-3 w-3 rounded-full flex-shrink-0 ${
-                      task.completed ? 'bg-green-500' : 
-                      task.priority === 'high' ? 'bg-red-500' : 
-                      task.priority === 'medium' ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'
-                    }`} />
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                        {task.title}
-                      </h3>
-                      <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
-                        <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-400 font-medium">
-                          {task.subject}
-                        </span>
-                        <span className="text-slate-500 dark:text-slate-500 flex items-center gap-1">
+              {tasks.length === 0 ? (
+                <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800">
+                  <p className="text-slate-500">No tasks found. Start by creating one!</p>
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <div 
+                    key={task.id} 
+                    className={`bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${task.completed ? 'opacity-75' : ''}`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <button 
+                        onClick={() => toggleComplete(task.id, task.completed)}
+                        className={`mt-1 flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                          task.completed 
+                            ? 'bg-indigo-600 border-indigo-600 text-white' 
+                            : 'border-slate-300 dark:border-slate-700 hover:border-indigo-500'
+                        }`}
+                        aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
+                      >
+                        {task.completed && (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                           </svg>
-                          Due: {task.dueDate}
-                        </span>
-                        <span className={`capitalize font-medium ${
-                          task.priority === 'high' ? 'text-red-600' : 
-                          task.priority === 'medium' ? 'text-amber-600' : 'text-slate-500'
+                        )}
+                      </button>
+                      
+                      <div>
+                        <h3 className={`text-lg font-bold transition-all ${
+                          task.completed 
+                            ? 'text-slate-400 line-through decoration-2' 
+                            : 'text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
                         }`}>
-                          {task.priority} Priority
-                        </span>
+                          {task.title}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-sm">
+                          <span className={`px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-medium transition-all ${
+                            task.completed ? 'text-slate-400' : 'text-slate-600 dark:text-slate-400'
+                          }`}>
+                            {task.subject}
+                          </span>
+                          <span className={`flex items-center gap-1 transition-all ${
+                            task.completed ? 'text-slate-400' : 'text-slate-500'
+                          }`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Due: {task.dueDate}
+                          </span>
+                          {!task.completed && (
+                            <span className={`capitalize font-medium ${
+                              task.priority === 'high' ? 'text-red-600' : 
+                              task.priority === 'medium' ? 'text-amber-600' : 'text-slate-500'
+                            }`}>
+                              {task.priority} Priority
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <button className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
         </div>
