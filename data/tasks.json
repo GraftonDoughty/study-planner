@@ -1,0 +1,44 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Study for math exam",
+      "dueDate": "2026-03-20",
+      "subject": "Mathematics",
+      "priority": "high",
+      "completed": false
+    },
+    {
+      "id": 2,
+      "title": "Read chapter 5",
+      "dueDate": "2026-03-18",
+      "subject": "Literature",
+      "priority": "medium",
+      "completed": true
+    },
+    {
+      "id": 3,
+      "title": "Prepare presentation slides",
+      "dueDate": "2026-03-22",
+      "subject": "History",
+      "priority": "low",
+      "completed": false
+    },
+    {
+      "id": 4,
+      "title": "New API Task",
+      "dueDate": "2026-03-24",
+      "subject": "General",
+      "priority": "medium",
+      "completed": false
+    },
+    {
+      "id": 5,
+      "title": "Complete Science Project",
+      "dueDate": "2026-03-30",
+      "subject": "Science",
+      "priority": "high",
+      "completed": false
+    }
+  ]
+}
